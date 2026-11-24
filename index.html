@@ -23,6 +23,7 @@
   .arrow { position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; padding:0; justify-content:center; border-radius:50%; font-size:20px; z-index:5; background:rgba(255,255,255,.9); }
   .arrow.prev { left:-6px; } .arrow.next { right:-6px; }
   @media (max-width:700px){ .arrow{ display:none; } }
+  html.embedded, html.embedded body { background:transparent; }
   .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
 </style>
 </head>
@@ -46,6 +47,8 @@
 
 <script src="page-flip.browser.js"></script>
 <script>
+  // Blend into the host page when embedded on tothegood.net.
+  if (window.self !== window.top) document.documentElement.classList.add('embedded');
   // Page images rendered from Steve's print PDF (Choice Graphics, 11/16/2026).
   // The print PDF is 7 spreads of a 5 x 7 inch booklet; each spread is split into its two pages.
   var SPREADS = [
