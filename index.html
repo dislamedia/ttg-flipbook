@@ -10,7 +10,7 @@
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:var(--paper); font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif; color:var(--ink); }
   .wrap { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; gap:14px; }
-  .stage { position:relative; width:100%; max-width:1100px; }
+  .stage { position:relative; width:100%; max-width:2000px; }
   #book { margin:0 auto; box-shadow:0 18px 40px rgba(14,40,63,.25), 0 2px 6px rgba(14,40,63,.15); }
   .page { background:#fff; }
   .page img { width:100%; height:100%; display:block; object-fit:contain; user-select:none; -webkit-user-drag:none; }
@@ -37,7 +37,7 @@
   </div>
   <div class="bar">
     <button id="prev" aria-label="Previous page">&#8249; Back</button>
-    <span class="count" id="count" aria-live="polite">1 / 7</span>
+    <span class="count" id="count" aria-live="polite">Page 1 / 12</span>
     <button id="next" aria-label="Next page">Next &#8250;</button>
     <button id="fs" aria-label="Full screen">Full screen</button>
     <a class="btn" href="To-The-Good-Prospectus.pdf" download>Download PDF</a>
@@ -50,37 +50,31 @@
   // Blend into the host page when embedded on tothegood.net.
   if (window.self !== window.top) document.documentElement.classList.add('embedded');
   // Page images rendered from Steve's print PDF (Choice Graphics, 11/16/2026).
-  // The print PDF is 7 spreads of a 5 x 7 inch booklet; each spread is split into its two pages.
-  var SPREADS = [
+  // The PDF has 12 landscape pages (10 x 7 in): a single cover, five two-page spreads, and a single back cover.
+  var TITLES = [
     "Cover: To the Good, Donor and Nonprofit Partnerships",
     "Donor and Nonprofit Partnerships, a letter from Steve Filosa",
-    "Donor Clients",
-    "Nonprofit Clients",
-    "Pro Bono Clients",
-    "Connect with Steve",
+    "To the Good by the numbers, over the last five years",
+    "Donor Clients", "Donor Clients (continued)",
+    "Nonprofit Clients", "Nonprofit Clients (continued)",
+    "Pro Bono Clients", "Pro Bono Clients (continued)",
+    "Connect with Steve", "Connect with Steve (continued)",
     "Back cover: To the Good, 580 Washington Street, Boston, MA 02111"
   ];
   var book = document.getElementById('book');
-  var PHONE = window.innerWidth < 700;
-  var list = [];
-  for (var n=1; n<=SPREADS.length*2; n++){
-    list.push(['pages/leaf-'+(n<10?'0':'')+n+'.jpg', SPREADS[Math.floor((n-1)/2)]+(n%2===0?' (continued)':'')]);
-  }
-  if (PHONE) {
-    // On phones the cover and back cover show whole, since they are designed across both halves.
-    list = [['pages/mobile-cover.jpg', SPREADS[0]]].concat(list.slice(2, -2), [['pages/mobile-back.jpg', SPREADS[SPREADS.length-1]]]);
-  }
-  list.forEach(function(p){
+  TITLES.forEach(function(t, k){
     var d=document.createElement('div'); d.className='page';
-    var i=document.createElement('img'); i.src=p[0]; i.alt=p[1];
+    var i=document.createElement('img'); i.src='pages/page-'+(k<9?'0':'')+(k+1)+'.jpg'; i.alt=t;
     d.appendChild(i); book.appendChild(d);
   });
 
-  // Two-page spreads on wide screens, one page at a time on phones.
+  // Pages keep the true 10 x 7 shape. Spreads on wide screens, one page at a time on narrow ones.
+  // Height is capped so the book plus controls always fit the frame it is embedded in.
+  var room = Math.max(220, window.innerHeight - 140);
   var pf = new St.PageFlip(book, {
-    width: 500, height: 700, size: 'stretch',
-    minWidth: 240, maxWidth: 560, minHeight: 336, maxHeight: 784,
-    usePortrait: true, showCover: false, maxShadowOpacity: 0.45,
+    width: 1000, height: 700, size: 'stretch',
+    minWidth: 300, maxWidth: 1000, minHeight: 210, maxHeight: Math.min(700, room),
+    usePortrait: true, showCover: true, maxShadowOpacity: 0.45,
     mobileScrollSupport: true, flippingTime: 800, autoSize: true
   });
   pf.loadFromHTML(book.querySelectorAll('.page'));
@@ -88,10 +82,9 @@
   var count=document.getElementById('count');
   function sync(){
     var i=pf.getCurrentPageIndex(), n=pf.getPageCount();
-    var land = pf.getOrientation && pf.getOrientation()==='landscape';
-    count.textContent = land ? ('Spread '+(Math.floor(i/2)+1)+' / '+(n/2)) : ('Page '+(i+1)+' / '+n);
+    count.textContent = 'Page '+(i+1)+' / '+n;
     ['prev','prev2'].forEach(function(id){document.getElementById(id).disabled = i<=0;});
-    ['next','next2'].forEach(function(id){document.getElementById(id).disabled = land ? i>=n-2 : i>=n-1;});
+    ['next','next2'].forEach(function(id){document.getElementById(id).disabled = i>=n-1;});
   }
   pf.on('flip', sync); pf.on('changeOrientation', sync); sync();
   ['prev','prev2'].forEach(function(id){document.getElementById(id).onclick=function(){pf.flipPrev();};});
